@@ -6,6 +6,8 @@ import { NoteItem, NoteState } from '@/types'
 import { isDraftNote } from '@/utils/helpers'
 import { getNotesSorter } from '@/utils/notesSortStrategies'
 
+import { sync } from './sync'
+
 const getNewActiveNoteId = (
   notes: NoteItem[],
   oldNoteId: string,

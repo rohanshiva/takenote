@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-import { SyncState, SyncPayload } from '@/types'
+import { SyncState, SyncPayload, SyncNotePayload } from '@/types'
 
 export const initialState: SyncState = {
   pendingSync: false,
@@ -17,7 +17,7 @@ const syncSlice = createSlice({
       state.pendingSync = true
     },
 
-    sync: (state, { payload }: PayloadAction<SyncPayload>) => {
+    sync: (state, { payload }: PayloadAction<SyncNotePayload>) => {
       state.syncing = true
     },
 

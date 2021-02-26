@@ -1,7 +1,49 @@
 import { v4 as uuid } from 'uuid'
 import dayjs from 'dayjs'
+import axios from 'axios'
+import { reject } from 'lodash'
 
-import { NoteItem, SyncPayload, SettingsState } from '@/types'
+import { NoteItem, SyncPayload, SettingsState, CategoryItem, SyncNotePayload } from '@/types'
+import note from '@/slices/note'
+
+function getCookieValue(a: string) {
+  var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)')
+
+  return b ? b.pop() : ''
+}
+function getProjectId(key: string) {
+  var id = key.split('_')[0]
+
+  return id ? id : ''
+}
+
+const project_key = getCookieValue('pk')
+const deta = Deta(getCookieValue('pk'))
+const base_name = 'notes'
+const project_id = getProjectId(project_key || '')
+var base_url = 'https://database.deta.sh/v1/' + project_id + '/' + base_name
+
+async function putNote(payload: any, key: string) {
+  const item = JSON.parse(payload)
+  item.key = key
+  const db = deta.Base('notes')
+  db.put(item).then((data: any) => {
+    return data
+  })
+}
+
+async function putCategories(payload: any) {
+  const item = JSON.parse(payload)
+  const cats = deta.Base('categories')
+  cats.put({ key: 'categories', value: item })
+}
+
+async function putSettings(payload: any) {
+  const item = payload
+  item.key = 'settings'
+  const sets = deta.Base('settings')
+  sets.put(item)
+}
 
 const scratchpadNote = {
   id: uuid(),
@@ -53,35 +95,51 @@ type GetLocalStorage = (
   errorMessage?: string
 ) => (resolve: PromiseCallback, reject: PromiseCallback) => void
 
-const getLocalStorage: GetLocalStorage = (key, errorMessage = 'Something went wrong') => (
+const getCategories: GetLocalStorage = (key, errorMessage = 'Something went wrong') => async (
   resolve,
   reject
 ) => {
-  const data = localStorage.getItem(key)
-
+  const cats = deta.Base('categories')
+  var data = await cats.get('categories')
+  data = data.value
   if (data) {
-    resolve(JSON.parse(data))
+    resolve(data)
   } else {
-    reject({
-      message: errorMessage,
-    })
+    reject({ message: errorMessage })
   }
 }
 
-const getUserNotes = () => (resolve: PromiseCallback, reject: PromiseCallback) => {
-  const notes: any = localStorage.getItem('notes')
+const getSettings: GetLocalStorage = (key, errorMessage = 'Something went wrong') => async (
+  resolve,
+  reject
+) => {
+  const sets = deta.Base('settings')
+  var data = await sets.get('settings')
+  data = data.value
+  if (data) {
+    resolve(data)
+  } else {
+    reject({ message: errorMessage })
+  }
+}
+
+const getUserNotes = () => async (resolve: PromiseCallback, reject: PromiseCallback) => {
+  const db = deta.Base('notes')
+  var values = await db.fetch().next()
+
+  const notes: any = values.value
 
   // check if there is any data in localstorage
   if (!notes) {
     // if there is none (i.e. new user), create the welcomeNote and scratchpadNote
     resolve([scratchpadNote, welcomeNote])
-  } else if (Array.isArray(JSON.parse(notes))) {
+  } else if (Array.isArray(notes)) {
     // if there is (existing user), show the user's notes
     resolve(
       // find does not work if the array is empty.
-      JSON.parse(notes).length === 0 || !JSON.parse(notes).find((note: NoteItem) => note.scratchpad)
-        ? [scratchpadNote, ...JSON.parse(notes)]
-        : JSON.parse(notes)
+      notes.length === 0 || !notes.find((note: NoteItem) => note.scratchpad)
+        ? [scratchpadNote, ...notes]
+        : notes
     )
   } else {
     reject({
@@ -101,9 +159,33 @@ export const saveState = ({ categories, notes }: SyncPayload) =>
     })
   })
 
-export const saveSettings = ({ isOpen, ...settings }: SettingsState) =>
-  Promise.resolve(localStorage.setItem('settings', JSON.stringify(settings)))
+export const saveCats = (categories: CategoryItem[]) =>
+  new Promise((resolve) => {
+    const cats = putCategories(JSON.stringify(categories))
+    resolve({
+      categories: categories,
+    })
+  })
 
+export const saveNotes = (notes: NoteItem[]) =>
+  new Promise((resolve) => {
+    for (var i = 0; i < notes.length; i++) {
+      var saved = putNote(JSON.stringify(notes[i]), notes[i].id)
+    }
+  })
+export const saveNote = ({ note, categories }: SyncNotePayload) =>
+  new Promise((resolve) => {
+    const noteId = note.id
+    const saved = putNote(JSON.stringify(note), noteId)
+    const cats = putCategories(JSON.stringify(categories))
+    resolve({
+      note: note,
+      categories: categories,
+    })
+  })
+export const saveSettings = ({ isOpen, ...settings }: SettingsState) => {
+  Promise.resolve(putSettings(settings))
+}
 export const requestNotes = () => new Promise(getUserNotes())
-export const requestCategories = () => new Promise(getLocalStorage('categories'))
-export const requestSettings = () => new Promise(getLocalStorage('settings'))
+export const requestCategories = () => new Promise(getCategories('categories'))
+export const requestSettings = () => new Promise(getSettings('settings'))

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "493d56a1-7488-4c59-b370-89f15fd5ccc2",
+    "text": "# Scratchpad\n\nThe easiest note to find.",
+    "category": "",
+    "scratchpad": true,
+    "favorite": false,
+    "created": "2021-02-25T08:40:04-06:00",
+    "lastUpdated": "2021-02-25T08:40:04-06:00"
+  },
+  {
+    "id": "709e6c72-bcd9-4614-a778-7ece35b3ea11",
+    "text": "First note\n\n\nTesting waters\n\n",
+    "category": "",
+    "favorite": false,
+    "created": "2021-02-25T08:40:04-06:00",
+    "lastUpdated": "2021-02-25T08:40:27-06:00"
+  },
+  {
+    "id": "46172ffa-923c-408d-966a-6eb0dc30c949",
+    "text": "Second\n\n\nSup baby",
+    "created": "2021-02-25T08:40:29-06:00",
+    "lastUpdated": "2021-02-25T08:40:34-06:00",
+    "category": "c44d4d46-ef81-4db0-a62d-ba6f997b61e9",
+    "favorite": true
+  },
+  {
+    "id": "510498b0-eac4-4b4a-94a6-bc7754faa40f",
+    "text": "aweomse tejesh\n\n\nthis works",
+    "created": "2021-02-25T08:40:44-06:00",
+    "lastUpdated": "2021-02-25T08:40:56-06:00",
+    "category": "c44d4d46-ef81-4db0-a62d-ba6f997b61e9",
+    "favorite": false
+  }
+]

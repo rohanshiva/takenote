@@ -4,7 +4,7 @@ import { Draggable } from 'react-beautiful-dnd'
 import { Folder as FolderIcon, MoreHorizontal } from 'react-feather'
 
 import { TestID } from '@resources/TestID'
-import { CategoryItem, ReactDragEvent, ReactMouseEvent, ReactSubmitEvent } from '@/types'
+import { CategoryItem, NoteItem, ReactDragEvent, ReactMouseEvent, ReactSubmitEvent } from '@/types'
 import { determineCategoryClass } from '@/utils/helpers'
 import { getNotes, getCategories, getSettings } from '@/selectors'
 import {
@@ -18,6 +18,9 @@ import { iconColor } from '@/utils/constants'
 import { ContextMenuEnum } from '@/utils/enums'
 import { getNotesSorter } from '@/utils/notesSortStrategies'
 import { ContextMenu } from '@/containers/ContextMenu'
+import { saveCats, saveNote, saveNotes } from '@/api'
+
+import { store } from '..'
 
 interface CategoryOptionProps {
   category: CategoryItem
@@ -62,16 +65,29 @@ export const CategoryOption: React.FC<CategoryOptionProps> = ({
   // Dispatch
   // ===========================================================================
 
+  function handleSync(id: string) {
+    const savedNotes = getNotes(store.getState()).notes
+    const activeNote = savedNotes.find((note) => note.id === id)!
+    const savedCategories = getCategories(store.getState()).categories
+    _sync(activeNote, savedCategories)
+  }
+
   const dispatch = useDispatch()
 
   const _updateActiveCategoryId = (categoryId: string) =>
     dispatch(updateActiveCategoryId(categoryId))
   const _updateActiveNote = (noteId: string, multiSelect: boolean) =>
     dispatch(updateActiveNote({ noteId, multiSelect }))
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => {
+    saveNote({ note, categories })
+  }
   const _updateSelectedNotes = (noteId: string, multiSelect: boolean) =>
     dispatch(updateSelectedNotes({ noteId, multiSelect }))
-  const _setCategoryEdit = (categoryId: string, tempName: string) =>
+  const _setCategoryEdit = (categoryId: string, tempName: string) => {
     dispatch(setCategoryEdit({ id: categoryId, tempName }))
+    saveCats(getCategories(store.getState()).categories)
+    saveNotes(getNotes(store.getState()).notes)
+  }
   const _addCategoryToNote = (categoryId: string, noteId: string) =>
     dispatch(addCategoryToNote({ categoryId, noteId }))
   const _categoryDragEnter = (category: CategoryItem) => dispatch(categoryDragEnter(category))
@@ -111,6 +127,7 @@ export const CategoryOption: React.FC<CategoryOptionProps> = ({
 
             _addCategoryToNote(category.id, event.dataTransfer.getData('text'))
             _categoryDragLeave(category)
+            handleSync(event.dataTransfer.getData('text'))
           }}
           onDragOver={(event: ReactDragEvent) => event.preventDefault()}
           onDragEnter={() => _categoryDragEnter(category)}

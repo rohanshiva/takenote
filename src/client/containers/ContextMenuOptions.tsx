@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
 import { ArrowUp, Download, Star, Trash, X, Edit2, Clipboard } from 'react-feather'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -19,6 +19,10 @@ import { Folder, ContextMenuEnum } from '@/utils/enums'
 import { CategoryItem, NoteItem } from '@/types'
 import { setCategoryEdit, deleteCategory } from '@/slices/category'
 import { MenuUtilitiesContext } from '@/containers/ContextMenu'
+import { sync } from '@/slices/sync'
+
+import { store } from '../index'
+import { saveCats, saveNote, saveNotes } from '../api/index'
 
 export interface ContextMenuOptionsProps {
   clickedItem: NoteItem | CategoryItem
@@ -44,11 +48,20 @@ const CategoryOptions: React.FC<CategoryOptionsProps> = ({ clickedCategory }) =>
 
   const dispatch = useDispatch()
 
-  const _deleteCategory = (categoryId: string) => dispatch(deleteCategory(categoryId))
-  const _swapFolder = (folder: Folder) => dispatch(swapFolder({ folder }))
-  const _setCategoryEdit = (categoryId: string, tempName: string) =>
+  const _deleteCategory = (categoryId: string) => {
+    dispatch(deleteCategory(categoryId))
+    saveCats(getCategories(store.getState()).categories)
+    saveNotes(getNotes(store.getState()).notes)
+  }
+  const _swapFolder = (folder: Folder) => {
+    dispatch(swapFolder({ folder }))
+    saveCats(getCategories(store.getState()).categories)
+    saveNotes(getNotes(store.getState()).notes)
+  }
+  const _setCategoryEdit = (categoryId: string, tempName: string) => {
     dispatch(setCategoryEdit({ id: categoryId, tempName }))
-
+    saveCats(getCategories(store.getState()).categories)
+  }
   // ===========================================================================
   // Context
   // ===========================================================================
@@ -97,6 +110,7 @@ const NotesOptions: React.FC<NotesOptionsProps> = ({ clickedNote }) => {
   // ===========================================================================
 
   const { selectedNotesIds, notes } = useSelector(getNotes)
+  const noteRef = useRef(notes)
   const { categories } = useSelector(getCategories)
 
   const selectedNotes = notes.filter((note) => selectedNotesIds.includes(note.id))
@@ -110,13 +124,37 @@ const NotesOptions: React.FC<NotesOptionsProps> = ({ clickedNote }) => {
 
   const dispatch = useDispatch()
 
-  const _deleteNotes = (noteIds: string[]) => dispatch(deleteNotes(noteIds))
-  const _toggleTrashNotes = (noteId: string) => dispatch(toggleTrashNotes(noteId))
-  const _toggleFavoriteNotes = (noteId: string) => dispatch(toggleFavoriteNotes(noteId))
-  const _addCategoryToNote = (categoryId: string, noteId: string) =>
+  function handleSync(id: string) {
+    const savedNotes = getNotes(store.getState()).notes
+    const activeNote = savedNotes.find((note) => note.id === id)!
+    const savedCategories = getCategories(store.getState()).categories
+    _sync(activeNote, savedCategories)
+  }
+
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => {
+    saveNote({ note, categories })
+  }
+
+  const _deleteNotes = (noteIds: string[]) => {
+    dispatch(deleteNotes(noteIds))
+    saveCats(getCategories(store.getState()).categories)
+    saveNotes(getNotes(store.getState()).notes)
+  }
+  const _toggleTrashNotes = (noteId: string) => {
+    dispatch(toggleTrashNotes(noteId))
+    handleSync(noteId)
+  }
+  const _toggleFavoriteNotes = (noteId: string) => {
+    dispatch(toggleFavoriteNotes(noteId))
+    handleSync(noteId)
+  }
+  const _addCategoryToNote = (categoryId: string, noteId: string) => {
     dispatch(addCategoryToNote({ categoryId, noteId }))
-  const _updateActiveNote = (noteId: string, multiSelect: boolean) =>
+    handleSync(noteId)
+  }
+  const _updateActiveNote = (noteId: string, multiSelect: boolean) => {
     dispatch(updateActiveNote({ noteId, multiSelect }))
+  }
 
   // ===========================================================================
   // Handlers
@@ -128,8 +166,12 @@ const NotesOptions: React.FC<NotesOptionsProps> = ({ clickedNote }) => {
       selectedNotesIds.includes(clickedNote.id) ? selectedNotes : [clickedNote],
       categories
     )
-  const favoriteNoteHandler = () => _toggleFavoriteNotes(clickedNote.id)
-  const trashNoteHandler = () => _toggleTrashNotes(clickedNote.id)
+  const favoriteNoteHandler = () => {
+    _toggleFavoriteNotes(clickedNote.id)
+  }
+  const trashNoteHandler = () => {
+    _toggleTrashNotes(clickedNote.id)
+  }
   const removeCategoryFromNoteHandler = () => {
     _addCategoryToNote('', clickedNote.id)
     _updateActiveNote(clickedNote.id, false)
@@ -139,6 +181,9 @@ const NotesOptions: React.FC<NotesOptionsProps> = ({ clickedNote }) => {
 
     const shortNoteUuid = getShortUuid(note.id)
     copyToClipboard(`{{${shortNoteUuid}}}`)
+  }
+  const checkNoteState = (e: React.SyntheticEvent, note: NoteItem) => {
+    e.preventDefault()
   }
 
   return !isDraftNote(clickedNote) ? (

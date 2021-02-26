@@ -1,6 +1,7 @@
 const webpack = require('webpack')
 const { merge } = require('webpack-merge')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const common = require('./webpack.common.js')
 
@@ -34,6 +35,7 @@ module.exports = merge(common, {
     port: 3000,
   },
   plugins: [
+    new NodePolyfillPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
       template: './public/template.html',

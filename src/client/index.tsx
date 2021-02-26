@@ -13,7 +13,7 @@ import history from '@/utils/history'
 import '@/styles/index.scss'
 
 const sagaMiddleware = createSagaMiddleware()
-const store = configureStore({
+export const store = configureStore({
   reducer: rootReducer,
   middleware: [sagaMiddleware, ...getDefaultMiddleware({ thunk: false })],
   devTools: process.env.NODE_ENV !== 'production',

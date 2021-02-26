@@ -1,8 +1,9 @@
 import { all, put, takeLatest, select } from 'redux-saga/effects'
 import dayjs from 'dayjs'
 import axios from 'axios'
+import { take } from 'lodash'
 
-import { requestCategories, requestNotes, requestSettings, saveState, saveSettings } from '@/api'
+import { requestCategories, requestNotes, requestSettings, saveSettings, saveNote } from '@/api'
 import { loadCategories, loadCategoriesError, loadCategoriesSuccess } from '@/slices/category'
 import { loadNotes, loadNotesError, loadNotesSuccess } from '@/slices/note'
 import { sync, syncError, syncSuccess } from '@/slices/sync'
@@ -17,7 +18,7 @@ import {
   toggleSettingsModal,
   updateNotesSortStrategy,
 } from '@/slices/settings'
-import { SyncAction } from '@/types'
+import { SyncAction, SyncNoteAction } from '@/types'
 import { getSettings } from '@/selectors'
 
 const isDemo = process.env.DEMO
@@ -90,20 +91,29 @@ function* fetchSettings() {
   let data
   try {
     data = yield requestSettings()
-
+    console.log(data)
     yield put(loadSettingsSuccess(data))
   } catch (error) {
     yield put(loadSettingsError())
   }
 }
 
-function* syncData({ payload }: SyncAction) {
+// function* syncData({ payload }: SyncAction) {
+//   try {
+//     if (isDemo) {
+//       yield saveState(payload)
+//     } else {
+//       yield axios.post('/api/sync', payload)
+//     }
+//     yield put(syncSuccess(dayjs().format()))
+//   } catch (error) {
+//     yield put(syncError(error.message))
+//   }
+// }
+
+function* syncNote({ payload }: SyncNoteAction) {
   try {
-    if (isDemo) {
-      yield saveState(payload)
-    } else {
-      yield axios.post('/api/sync', payload)
-    }
+    yield saveNote(payload)
     yield put(syncSuccess(dayjs().format()))
   } catch (error) {
     yield put(syncError(error.message))
@@ -115,7 +125,9 @@ function* syncSettings() {
     const settings = yield select(getSettings)
 
     yield saveSettings(settings)
-  } catch (error) {}
+  } catch (error) {
+    console.info(error)
+  }
 }
 
 // If any of these functions are dispatched, invoke the appropriate saga
@@ -126,7 +138,7 @@ function* rootSaga() {
     takeLatest(loadNotes.type, fetchNotes),
     takeLatest(loadCategories.type, fetchCategories),
     takeLatest(loadSettings.type, fetchSettings),
-    takeLatest(sync.type, syncData),
+    takeLatest(sync.type, syncNote),
     takeLatest(
       [
         toggleDarkTheme.type,

@@ -9,6 +9,9 @@ import { NoteItem, CategoryItem } from '@/types'
 import { getNotes, getCategories, getSettings } from '@/selectors'
 import { ContextMenuEnum } from '@/utils/enums'
 import { isDraftNote } from '@/utils/helpers'
+import { saveNote } from '@/api'
+
+import { store } from '..'
 
 export const MenuUtilitiesContext = createContext({
   setOptionsId: (id: string) => {},
@@ -137,8 +140,20 @@ const NotesMenu: React.FC<NotesMenuProps> = ({ note, setOptionsId }) => {
 
   const dispatch = useDispatch()
 
-  const _addCategoryToNote = (categoryId: string, noteId: string) =>
+  function handleSync(id: string) {
+    const savedNotes = getNotes(store.getState()).notes
+    const activeNote = savedNotes.find((note) => note.id === id)!
+    const savedCategories = getCategories(store.getState()).categories
+    _sync(activeNote, savedCategories)
+  }
+
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => {
+    saveNote({ note, categories })
+  }
+  const _addCategoryToNote = (categoryId: string, noteId: string) => {
     dispatch(addCategoryToNote({ categoryId, noteId }))
+    handleSync(noteId)
+  }
   const _updateActiveNote = (noteId: string, multiSelect: boolean) =>
     dispatch(updateActiveNote({ noteId, multiSelect }))
   const _updateActiveCategoryId = (categoryId: string) =>

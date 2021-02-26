@@ -16,9 +16,14 @@ import {
   searchNotes,
   updateSelectedNotes,
 } from '@/slices/note'
-import { NoteItem, ReactDragEvent, ReactMouseEvent } from '@/types'
+import { CategoryItem, NoteItem, ReactDragEvent, ReactMouseEvent } from '@/types'
 import { getNotes, getSettings, getCategories } from '@/selectors'
 import { getNotesSorter } from '@/utils/notesSortStrategies'
+import { sync } from '@/slices/sync'
+import { saveNote } from '@/api'
+import category from '@/slices/category'
+
+import { store } from '..'
 
 export const NoteList: React.FC = () => {
   // ===========================================================================
@@ -37,12 +42,22 @@ export const NoteList: React.FC = () => {
 
   const dispatch = useDispatch()
 
+  function handleSync(id: string) {
+    const savedNotes = getNotes(store.getState()).notes
+    const activeNote = savedNotes.find((note) => note.id === id)!
+    const savedCategories = getCategories(store.getState()).categories
+    _sync(activeNote, savedCategories)
+  }
+
   const _updateSelectedNotes = (noteId: string, multiSelect: boolean) =>
     dispatch(updateSelectedNotes({ noteId, multiSelect }))
   const _permanentlyEmptyTrash = () => dispatch(permanentlyEmptyTrash())
   const _pruneNotes = () => dispatch(pruneNotes())
   const _updateActiveNote = (noteId: string, multiSelect: boolean) =>
     dispatch(updateActiveNote({ noteId, multiSelect }))
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => {
+    saveNote({ note, categories })
+  }
   const _searchNotes = debounceEvent(
     (searchValue: string) => dispatch(searchNotes(searchValue)),
     100
@@ -86,7 +101,6 @@ export const NoteList: React.FC = () => {
 
   const handleDragStart = (event: ReactDragEvent, noteId: string = '') => {
     event.stopPropagation()
-
     event.dataTransfer.setData('text/plain', noteId)
   }
 
@@ -172,7 +186,14 @@ export const NoteList: React.FC = () => {
       <div data-testid={TestID.NOTE_LIST} className="note-list">
         {filteredNotes.map((note: NoteItem, index: number) => {
           let noteTitle: string | React.ReactElement = getNoteTitle(note.text)
-          const noteCategory = categories.find((category) => category.id === note.category)
+
+          var noteCategory
+
+          for (var i = 0; i < categories.length; i++) {
+            if (String(categories[i].id) === String(note.category)) {
+              noteCategory = categories[i]
+            }
+          }
 
           if (searchValue) {
             const highlightStart = noteTitle.search(re)

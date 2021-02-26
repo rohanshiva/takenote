@@ -36,10 +36,10 @@ export const TakeNoteApp: React.FC = () => {
   // ===========================================================================
 
   const { darkTheme, sidebarVisible } = useSelector(getSettings)
-  const { activeFolder, activeCategoryId, notes } = useSelector(getNotes)
+  const { activeFolder, activeCategoryId, notes, activeNoteId } = useSelector(getNotes)
   const { categories } = useSelector(getCategories)
   const { pendingSync } = useSelector(getSync)
-
+  const activeNote = notes.find((note) => note.id === activeNoteId)!
   const activeCategory = getActiveCategory(categories, activeCategoryId)
 
   // ===========================================================================
@@ -53,8 +53,7 @@ export const TakeNoteApp: React.FC = () => {
   const _loadSettings = () => dispatch(loadSettings())
   const _swapCategories = (categoryId: number, destinationId: number) =>
     dispatch(swapCategories({ categoryId, destinationId }))
-  const _sync = (notes: NoteItem[], categories: CategoryItem[]) =>
-    dispatch(sync({ notes, categories }))
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => dispatch(sync({ note, categories }))
 
   // ===========================================================================
   // Handlers
@@ -62,7 +61,6 @@ export const TakeNoteApp: React.FC = () => {
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result
-
     if (!destination) return
 
     if (destination.droppableId === source.droppableId && destination.index === source.index) return
@@ -82,9 +80,9 @@ export const TakeNoteApp: React.FC = () => {
     _loadSettings()
   }, [])
 
-  useInterval(() => {
-    _sync(notes, categories)
-  }, 50000)
+  // useInterval(() => {
+  //   _sync(activeNote, categories)
+  // }, 50000)
 
   useBeforeUnload((event: BeforeUnloadEvent) => (pendingSync ? event.preventDefault() : null))
 

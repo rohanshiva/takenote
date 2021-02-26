@@ -77,8 +77,7 @@ export const NoteMenuBar = () => {
   const _togglePreviewMarkdown = () => dispatch(togglePreviewMarkdown())
   const _toggleTrashNotes = (noteId: string) => dispatch(toggleTrashNotes(noteId))
   const _toggleFavoriteNotes = (noteId: string) => dispatch(toggleFavoriteNotes(noteId))
-  const _sync = (notes: NoteItem[], categories: CategoryItem[]) =>
-    dispatch(sync({ notes, categories }))
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => dispatch(sync({ note, categories }))
   const _toggleSettingsModal = () => dispatch(toggleSettingsModal())
   const _toggleDarkTheme = () => dispatch(toggleDarkTheme())
   const _updateCodeMirrorOption = (key: string, value: any) =>
@@ -91,7 +90,7 @@ export const NoteMenuBar = () => {
   const downloadNotesHandler = () => downloadNotes([activeNote], categories)
   const favoriteNoteHandler = () => _toggleFavoriteNotes(activeNoteId)
   const trashNoteHandler = () => _toggleTrashNotes(activeNoteId)
-  const syncNotesHandler = () => _sync(notes, categories)
+  const syncNoteHandler = () => _sync(activeNote, categories)
   const settingsHandler = () => _toggleSettingsModal()
   const toggleDarkThemeHandler = () => {
     _toggleDarkTheme()
@@ -143,12 +142,8 @@ export const NoteMenuBar = () => {
       )}
       <nav>
         <LastSyncedNotification datetime={lastSynced} pending={pendingSync} syncing={syncing} />
-        <button
-          className="note-menu-bar-button"
-          onClick={syncNotesHandler}
-          data-testid={TestID.TOPBAR_ACTION_SYNC_NOTES}
-        >
-          {syncing ? <Loader size={18} className="rotating-svg" /> : <RefreshCw size={18} />}
+        <button className="note-menu-bar-button" onClick={syncNoteHandler}>
+          <RefreshCw size={18} />
         </button>
         <button className="note-menu-bar-button" onClick={toggleDarkThemeHandler}>
           {darkTheme ? <Sun size={18} /> : <Moon size={18} />}

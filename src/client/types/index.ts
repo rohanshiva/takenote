@@ -97,6 +97,16 @@ export interface SyncPayload {
   notes: NoteItem[]
 }
 
+export interface SyncNotePayload {
+  note: NoteItem
+  categories: CategoryItem[]
+}
+
+export interface SyncNoteAction {
+  type: typeof sync.type
+  payload: SyncNotePayload
+}
+
 export interface SyncAction {
   type: typeof sync.type
   payload: SyncPayload

@@ -31,7 +31,7 @@ export const KeyboardShortcuts: React.FC = () => {
   )
   const { darkTheme, previewMarkdown } = useSelector(getSettings)
 
-  const activeNote = getActiveNote(notes, activeNoteId)
+  const activeNote = notes.find((note) => note.id === activeNoteId)!
 
   // ===========================================================================
   // Dispatch
@@ -46,8 +46,7 @@ export const KeyboardShortcuts: React.FC = () => {
     dispatch(updateSelectedNotes({ noteId, multiSelect }))
   const _swapFolder = (folder: Folder) => dispatch(swapFolder({ folder }))
   const _toggleTrashNotes = (noteId: string) => dispatch(toggleTrashNotes(noteId))
-  const _sync = (notes: NoteItem[], categories: CategoryItem[]) =>
-    dispatch(sync({ notes, categories }))
+  const _sync = (note: NoteItem, categories: CategoryItem[]) => dispatch(sync({ note, categories }))
   const _togglePreviewMarkdown = () => dispatch(togglePreviewMarkdown())
   const _toggleDarkTheme = () => dispatch(toggleDarkTheme())
   const _updateCodeMirrorOption = (key: string, value: string) =>
@@ -77,7 +76,7 @@ export const KeyboardShortcuts: React.FC = () => {
     )
   const newTempCategoryHandler = () => !addingTempCategory && setAddingTempCategory(true)
   const trashNoteHandler = () => _toggleTrashNotes(activeNote!.id)
-  const syncNotesHandler = () => _sync(notes, categories)
+  const syncNotesHandler = () => _sync(activeNote, categories)
   const downloadNotesHandler = () => {
     if (!activeNote || selectedNotesIds.length === 0) return
     downloadNotes(
