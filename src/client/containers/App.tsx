@@ -56,16 +56,7 @@ export const App: React.FC = () => {
       </Helmet>
 
       <Switch>
-        {isDemo ? (
-          <>
-            <Route path="/" component={TakeNoteApp} />
-          </>
-        ) : (
-          <>
-            <PrivateRoute path="/" component={TakeNoteApp} />
-          </>
-        )}
-
+        <Route path="/" component={TakeNoteApp} />
         <Redirect to="/" />
       </Switch>
     </HelmetProvider>

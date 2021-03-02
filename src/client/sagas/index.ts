@@ -1,4 +1,6 @@
-import { all, put, takeLatest, select } from 'redux-saga/effects'
+import { Settings } from 'http2'
+
+import { all, put, takeLatest, select, PutEffect } from 'redux-saga/effects'
 import dayjs from 'dayjs'
 import axios from 'axios'
 import { take } from 'lodash'
@@ -18,7 +20,7 @@ import {
   toggleSettingsModal,
   updateNotesSortStrategy,
 } from '@/slices/settings'
-import { SyncAction, SyncNoteAction } from '@/types'
+import { CategoryItem, NoteItem, SettingsState, SyncAction, SyncNoteAction } from '@/types'
 import { getSettings } from '@/selectors'
 
 const isDemo = process.env.DEMO
@@ -55,15 +57,9 @@ function* logoutUser() {
 
 // Get notes from API
 function* fetchNotes() {
-  let data
   try {
-    if (isDemo) {
-      data = yield requestNotes()
-    } else {
-      data = (yield axios('/api/sync/notes')).data
-    }
+    const data: NoteItem[] = yield requestNotes()
     const { notesSortKey } = yield select(getSettings)
-
     yield put(loadNotesSuccess({ notes: data, sortOrderKey: notesSortKey }))
   } catch (error) {
     yield put(loadNotesError(error.message))
@@ -72,28 +68,20 @@ function* fetchNotes() {
 
 // Get categories from API
 function* fetchCategories() {
-  let data
   try {
-    if (isDemo) {
-      data = yield requestCategories()
-    } else {
-      data = (yield axios('/api/sync/categories')).data
-    }
-
+    const data: CategoryItem[] = yield requestCategories()
     yield put(loadCategoriesSuccess(data))
-  } catch (error) {
+  } catch (error: any) {
     yield put(loadCategoriesError(error.message))
   }
 }
 
 // Get settings from API
 function* fetchSettings() {
-  let data
   try {
-    data = yield requestSettings()
-    console.log(data)
+    const data: SettingsState = yield requestSettings()
     yield put(loadSettingsSuccess(data))
-  } catch (error) {
+  } catch (error: any) {
     yield put(loadSettingsError())
   }
 }
@@ -122,10 +110,9 @@ function* syncNote({ payload }: SyncNoteAction) {
 
 function* syncSettings() {
   try {
-    const settings = yield select(getSettings)
-
+    const settings: SettingsState = yield select(getSettings)
     yield saveSettings(settings)
-  } catch (error) {
+  } catch (error: any) {
     console.info(error)
   }
 }

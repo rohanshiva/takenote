@@ -42,6 +42,7 @@ module.exports = merge(common, {
       chunkFilename: 'styles/[name].[id].[contenthash].css',
       ignoreOrder: false,
     }),
+
     new HtmlWebpackPlugin({
       template: './public/template.html',
       favicon: './public/favicon.ico',
@@ -62,6 +63,7 @@ module.exports = merge(common, {
     runtimeChunk: 'multiple',
     splitChunks: {
       // Cache vendors since this code won't change very often
+      maxSize: 30000,
       cacheGroups: {
         vendor: {
           test: /[\\/]node_modules[\\/](react|react-dom|axios|redux|react-redux)[\\/]/,

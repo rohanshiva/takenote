@@ -1,27 +1,18 @@
 import { v4 as uuid } from 'uuid'
 import dayjs from 'dayjs'
-import axios from 'axios'
-import { reject } from 'lodash'
 
 import { NoteItem, SyncPayload, SettingsState, CategoryItem, SyncNotePayload } from '@/types'
-import note from '@/slices/note'
 
 function getCookieValue(a: string) {
   var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)')
 
   return b ? b.pop() : ''
 }
-function getProjectId(key: string) {
-  var id = key.split('_')[0]
 
-  return id ? id : ''
-}
+declare const window: any
 
 const project_key = getCookieValue('pk')
-const deta = Deta(getCookieValue('pk'))
-const base_name = 'notes'
-const project_id = getProjectId(project_key || '')
-var base_url = 'https://database.deta.sh/v1/' + project_id + '/' + base_name
+const deta = window.Deta(project_key)
 
 async function putNote(payload: any, key: string) {
   const item = JSON.parse(payload)
@@ -115,7 +106,7 @@ const getSettings: GetLocalStorage = (key, errorMessage = 'Something went wrong'
 ) => {
   const sets = deta.Base('settings')
   var data = await sets.get('settings')
-  data = data.value
+  data = data
   if (data) {
     resolve(data)
   } else {
